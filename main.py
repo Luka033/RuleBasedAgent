@@ -8,7 +8,7 @@ def main():
     clock = pygame.time.Clock()
     environment = Environment(WIN, OBSTACLE_PERCENTAGE)
     agent = environment.get_agent()
-    start_mission = False
+    mission_started = False
     while run:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -18,13 +18,11 @@ def main():
                 if event.key == pygame.K_r:
                     environment.reset()
                     agent = environment.get_agent()
-                    start_mission = False
+                    mission_started = False
                 if event.key == pygame.K_SPACE:
-                    start_mission = True
+                    mission_started = True
 
-                # elif environment.get_game_state() == 0:
-                #     agent.inference_engine(environment)
-        if start_mission and environment.get_game_state() == 0:
+        if mission_started and environment.get_game_state() == 0:
             agent.inference_engine(environment)
 
         environment.update()
@@ -33,11 +31,6 @@ def main():
     pygame.quit()
 
 
-
-
 if __name__ == '__main__':
     main()
-
-
-
 

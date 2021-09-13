@@ -3,7 +3,7 @@ pygame.font.init()
 
 
 WIN = pygame.display.set_mode()
-OBSTACLE_PERCENTAGE = 40
+OBSTACLE_PERCENTAGE = 30
 ROWS, COLS = 48, 28
 START_POS = 245
 GOAL_POS = 1245
@@ -15,7 +15,7 @@ MAXIMUM_STEPS = 200
 AGENT_STACK_SIZE = 20
 AGENT_MOVE_DELAY = 500
 
-LARGE_FONT = pygame.font.SysFont("comicsans", 70)
+LARGE_FONT = pygame.font.SysFont("comicsans", 100)
 MEDIUM_FONT = pygame.font.SysFont("comicsans", 30)
 SMALL_FONT = pygame.font.SysFont("comicsans", 15)
 
@@ -32,5 +32,4 @@ ORANGE = (255, 165, 0)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 GREEN = (34, 139, 34)
-# GREEN = (0, 200, 0)
 
