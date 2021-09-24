@@ -28,3 +28,14 @@ def find_first_num_from_sublist(list, sub_list):
             if first_num_candidate == num:
                 return first_num_candidate
     return None
+
+def get_new_rotation(current_rotation, rotation):
+    """
+    Returns the new rotation after it has been updated
+    :param current_rotation: integer representing the current rotation given in degrees [0 - 360)
+    :param rotation: integer representing how many degrees to append/subtract
+    :return: integer representing the new rotation
+    """
+    current_rotation += rotation
+    current_rotation %= 360
+    return current_rotation

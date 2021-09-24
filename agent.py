@@ -1,8 +1,11 @@
+import random
+
 import pygame
 import numpy as np
 from constants import (COLS, START_POS, GOAL_POS, ROWS, SQUARE_SIZE, ROTATION,
                        ROVER, AGENT_STACK_SIZE, AGENT_MOVE_DELAY)
-from utils import agent_is_in_given_column, is_valid_coordinate, distance_between_points, find_first_num_from_sublist
+from utils import (agent_is_in_given_column, is_valid_coordinate, distance_between_points, find_first_num_from_sublist,
+                   get_new_rotation)
 
 
 class Agent:
@@ -31,19 +34,21 @@ class Agent:
         """
         database = np.full((ROWS * COLS), 2, dtype=int)
         database[START_POS] = 1
-        database[GOAL_POS] = 3
+        database[GOAL_POS] = 1
         return database
 
     def inference_engine(self, environment):
         """
-        Main driver of decision making. Uses helper functions to make decision and finally move
+        Main driver of decision making. Uses helper functions to make decision and finally move the agent
         :param environment: the current environment class instance to interact in
         """
         self.sonar(environment.get_grid())
         environment.update()
         pygame.time.wait(AGENT_MOVE_DELAY // 2)
         possible_moves = self.calculate_valid_moves()
+
         if (set(possible_moves).issubset(set(self.moves_stack))):
+            # if the possible moves are a subset of the moves stack it means we reached a dead end and want to move back
             next_move = find_first_num_from_sublist(self.moves_stack, possible_moves)
             next_destination = next_move - self.current_pos if next_move is not None else self.current_pos
         else:
@@ -61,9 +66,9 @@ class Agent:
         """
         piece_position = self.current_pos
         move_coordinates = [  # get the coordinates of 9, 12, and 3 a clock relative to the agents current rotation
-            self.ROTATION_MOVE_COORDINATES[self.__get_new_rotation(-ROTATION)],
+            self.ROTATION_MOVE_COORDINATES[get_new_rotation(self.rotation_angle, -ROTATION)],
             self.ROTATION_MOVE_COORDINATES[self.rotation_angle],
-            self.ROTATION_MOVE_COORDINATES[self.__get_new_rotation(ROTATION)],
+            self.ROTATION_MOVE_COORDINATES[get_new_rotation(self.rotation_angle, ROTATION)],
         ]
         for current_offset in move_coordinates:
             destination_coordinate = piece_position
@@ -75,7 +80,7 @@ class Agent:
 
                 destination_coordinate += current_offset
                 if is_valid_coordinate(destination_coordinate):
-                    if current_grid[destination_coordinate] == 1 or current_grid[destination_coordinate] == 3:
+                    if current_grid[destination_coordinate] == 1:
                         self.database[destination_coordinate] = 1
                     elif current_grid[destination_coordinate] == 0:
                         self.database[destination_coordinate] = 0
@@ -94,7 +99,7 @@ class Agent:
             if is_valid_coordinate(destination_coordinate):
                 if self.__is_first_column_exclusion(piece_position, current_offset) or \
                         self.__is_last_column_exclusion(piece_position, current_offset) or \
-                        self.database[destination_coordinate] != 1:
+                        self.database[destination_coordinate] == 0:
                     continue
                 possible_moves.append(destination_coordinate)
         return possible_moves
@@ -105,7 +110,7 @@ class Agent:
         :param possible_moves: an array of possible moves
         :return: an integer representing the next move to take
         """
-        next_destination_coordinate = self.current_pos
+        next_destination_coordinate = None
         shortest_distance = float('inf')
         for move in possible_moves:
             distance = distance_between_points(move, GOAL_POS)
@@ -115,6 +120,10 @@ class Agent:
 
         return next_destination_coordinate
 
+    def get_next_destination_coordinate(self, best_destination_coordinate):
+        pass
+
+
     def make_move(self, move):
         """
         Moves the agent and updates the move stack and agent database
@@ -123,76 +132,77 @@ class Agent:
         move_made = False
         if move == -ROWS:  # NORTH
             if 0 < self.rotation_angle <= 180:
-                self.rotation_angle = self.__get_new_rotation(-ROTATION)
+                self.rotation_angle = get_new_rotation(self.rotation_angle, -ROTATION)
             elif self.rotation_angle > 180:
-                self.rotation_angle = self.__get_new_rotation(ROTATION)
+                self.rotation_angle = get_new_rotation(self.rotation_angle, ROTATION)
             else:
                 move_made = True
 
         elif move == -(ROWS - 1):  # NORTH-EAST
             if 45 < self.rotation_angle <= 225:
-                self.rotation_angle = self.__get_new_rotation(-ROTATION)
+                self.rotation_angle = get_new_rotation(self.rotation_angle, -ROTATION)
             elif 45 > self.rotation_angle or self.rotation_angle > 225:
-                self.rotation_angle = self.__get_new_rotation(ROTATION)
+                self.rotation_angle = get_new_rotation(self.rotation_angle, ROTATION)
             else:
                 move_made = True
 
         elif move == 1:  # EAST
             if 90 < self.rotation_angle <= 270:
-                self.rotation_angle = self.__get_new_rotation(-ROTATION)
+                self.rotation_angle = get_new_rotation(self.rotation_angle, -ROTATION)
             elif self.rotation_angle < 90 or self.rotation_angle > 270:
-                self.rotation_angle = self.__get_new_rotation(ROTATION)
+                self.rotation_angle = get_new_rotation(self.rotation_angle, ROTATION)
             else:
                 move_made = True
 
         elif move == (ROWS + 1):  # SOUTH-EAST
             if 135 < self.rotation_angle < 315:
-                self.rotation_angle = self.__get_new_rotation(-ROTATION)
+                self.rotation_angle = get_new_rotation(self.rotation_angle, -ROTATION)
             elif self.rotation_angle < 135 or self.rotation_angle >= 315:
-                self.rotation_angle = self.__get_new_rotation(ROTATION)
+                self.rotation_angle = get_new_rotation(self.rotation_angle, ROTATION)
             else:
                 move_made = True
 
         elif move == ROWS:  # SOUTH
             if self.rotation_angle > 180:
-                self.rotation_angle = self.__get_new_rotation(-ROTATION)
+                self.rotation_angle = get_new_rotation(self.rotation_angle, -ROTATION)
             elif 0 <= self.rotation_angle < 180:
-                self.rotation_angle = self.__get_new_rotation(ROTATION)
+                self.rotation_angle = get_new_rotation(self.rotation_angle, ROTATION)
             else:
                 move_made = True
 
         elif move == (ROWS - 1):  # SOUTH-WEST
             if self.rotation_angle < 45 or self.rotation_angle > 225:
-                self.rotation_angle = self.__get_new_rotation(-ROTATION)
+                self.rotation_angle = get_new_rotation(self.rotation_angle, -ROTATION)
             elif 45 <= self.rotation_angle < 225:
-                self.rotation_angle = self.__get_new_rotation(ROTATION)
+                self.rotation_angle = get_new_rotation(self.rotation_angle, ROTATION)
             else:
                 move_made = True
 
         elif move == -1:  # WEST
             if 270 > self.rotation_angle >= 90:
-                self.rotation_angle = self.__get_new_rotation(ROTATION)
+                self.rotation_angle = get_new_rotation(self.rotation_angle, ROTATION)
             elif self.rotation_angle > 270 or self.rotation_angle < 90:
-                self.rotation_angle = self.__get_new_rotation(-ROTATION)
+                self.rotation_angle = get_new_rotation(self.rotation_angle, -ROTATION)
             else:
                 move_made = True
 
         elif move == -(ROWS + 1):  # NORTH-WEST
             if 135 < self.rotation_angle < 315:
-                self.rotation_angle = self.__get_new_rotation(ROTATION)
+                self.rotation_angle = get_new_rotation(self.rotation_angle, ROTATION)
             elif self.rotation_angle <= 135 or self.rotation_angle > 315:
-                self.rotation_angle = self.__get_new_rotation(-ROTATION)
+                self.rotation_angle = get_new_rotation(self.rotation_angle, -ROTATION)
             else:
                 move_made = True
-        else:  # No valid moves, just rotate
-            self.rotation_angle = self.__get_new_rotation(-ROTATION)
+        else:  # No valid moves, just rotate randomly
+            pos_or_neg = random.choice([-1, 1])
+            self.rotation_angle = get_new_rotation(self.rotation_angle, pos_or_neg * ROTATION)
 
         if move_made:
             self.current_pos += self.ROTATION_MOVE_COORDINATES[self.rotation_angle]
-            self.database[self.current_pos] = 1
+            self.__update_move_stack(self.current_pos)
 
         self.steps += 1
-        self.__update_move_stack(self.current_pos)
+
 
     def get_steps(self):
         return self.steps
@@ -226,23 +236,11 @@ class Agent:
     def __update_move_stack(self, most_recent_move):
         if most_recent_move not in self.moves_stack:
             self.moves_stack.append(most_recent_move)
+        else:
+            self.moves_stack.append(self.moves_stack.pop(self.moves_stack.index(most_recent_move)))
         if len(self.moves_stack) > AGENT_STACK_SIZE:
             self.moves_stack.pop(0)
 
-    def __get_new_rotation(self, rotation):
-        current_rotation = self.rotation_angle
-        # current_rotation += rotation
-        # # TODO: Optimize
-        # if current_rotation < 0:
-        #     current_rotation = 360 - abs(rotation)
-        # elif current_rotation == 360:
-        #     current_rotation = 0
-        # else:
-        #     current_rotation = current_rotation % 360
-        # return current_rotation
-        current_rotation += rotation
-        current_rotation %= 360
-        return current_rotation
 
     def print_database(self):  # Mainly for debugging
         print("======= CURRENT DATABASE ============")

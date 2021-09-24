@@ -6,6 +6,7 @@ relative to its current rotation. The sonar will update the agents internal data
 will be shown as green or red squares, green for squares that free and red for squares that have obstacles.
 
 
+
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/nY1yhH-1TPo/0.jpg)](https://www.youtube.com/watch?v=nY1yhH-1TPo)
 ## How to start the project?
 
@@ -26,5 +27,16 @@ conda activate agent-env
 **5. Install all required modules listed in requirements.txt:**
 ```
 conda install --file requirements.txt
+```
+**6. Set the root directory path in PYTHONPATH:**
+```
+PYTHONPATH=`pwd`
+```
+**7. Run the program:**
+
+NOTE: If no filename or invalid filename is given, the program will generate a new random environment with the 
+pre-set `OBSTACLE_PERCENTAGE` variable in `constants.py`. There are 4 sample environments in the `environments` folder
+```
+python3 main.py <environment_filename>
 ```
 
